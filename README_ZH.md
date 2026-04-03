@@ -405,6 +405,34 @@ cargo test test_name
 cargo test --features test-hooks
 ```
 
+### 构建 Windows ARM64（二进制）
+
+如果你要产出 **Windows on ARM64** 安装包/可执行文件，建议优先在 Windows 主机上构建（工具链最省心）：
+
+```powershell
+# 1) 安装 Rust Windows ARM64 目标
+rustup target add aarch64-pc-windows-msvc
+
+# 2) 构建 Windows ARM64
+pnpm tauri build --target aarch64-pc-windows-msvc
+```
+
+如果你只想在 GitHub 上快速验证能否编译，也可以直接运行仓库里的
+**Build Windows ARM64** 工作流（`Actions` → `Build Windows ARM64` → `Run workflow`）。
+该工作流会上传构建出的 ARM64 `.exe` 作为 artifact 供下载。
+
+构建产物默认在：
+
+```text
+src-tauri/target/aarch64-pc-windows-msvc/release/
+```
+
+常见问题排查：
+
+- 如果提示缺少 C++ 构建工具，请安装 **Visual Studio 2022 Build Tools**（勾选 *Desktop development with C++*）。
+- 如果提示 WebView2 相关依赖，请在目标机器安装 **Microsoft Edge WebView2 Runtime**。
+- 若你在 Linux/macOS 上交叉编译到 `aarch64-pc-windows-msvc`，通常需要额外配置 Windows 链接器与 SDK，复杂度明显更高，不如在 Windows 环境直接构建。
+
 ### 测试说明
 
 **前端测试**：
