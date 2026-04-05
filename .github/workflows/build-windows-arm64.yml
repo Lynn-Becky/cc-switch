@@ -66,7 +66,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Windows ARM64 executable
-        run: pnpm tauri build --target aarch64-pc-windows-msvc --bundles none
+        run: pnpm tauri build --target aarch64-pc-windows-msvc 
 
       - name: Upload Windows ARM64 executable
         uses: actions/upload-artifact@v4
