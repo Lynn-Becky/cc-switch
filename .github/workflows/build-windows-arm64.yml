@@ -65,12 +65,45 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Windows ARM64 executable
-        run: pnpm tauri build --target aarch64-pc-windows-msvc 
+      - name: Build frontend assets
+        run: pnpm run build:renderer
 
-      - name: Upload Windows ARM64 executable
+      - name: Build Windows ARM64 executable
+        shell: pwsh
+        run: cargo build --manifest-path src-tauri/Cargo.toml --release --target aarch64-pc-windows-msvc
+
+      - name: Prepare Windows ARM64 artifacts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $releaseDir = 'release-assets'
+          $portableDir = Join-Path $releaseDir 'cc-switch-windows-arm64-portable'
+          $exePath = 'src-tauri/target/aarch64-pc-windows-msvc/release/cc-switch.exe'
+
+          if (-not (Test-Path $exePath)) {
+            throw "ARM64 executable not found: $exePath"
+          }
+
+          New-Item -ItemType Directory -Force -Path $portableDir | Out-Null
+          Copy-Item $exePath $portableDir
+
+          @(
+            '# CC Switch portable build marker'
+            'portable=true'
+          ) | Set-Content -Path (Join-Path $portableDir 'portable.ini') -Encoding UTF8
+
+          Copy-Item $exePath (Join-Path $releaseDir 'cc-switch-windows-arm64.exe')
+
+          $zipPath = Join-Path $releaseDir 'cc-switch-windows-arm64-portable.zip'
+          if (Test-Path $zipPath) {
+            Remove-Item $zipPath -Force
+          }
+
+          Compress-Archive -Path "$portableDir/*" -DestinationPath $zipPath -Force
+
+      - name: Upload Windows ARM64 artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: cc-switch-windows-arm64-exe
-          path: src-tauri/target/aarch64-pc-windows-msvc/release/*.exe
+          name: cc-switch-windows-arm64
+          path: release-assets/*
           if-no-files-found: error
